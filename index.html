@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="./vue.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.2/css/bulma.min.css">
+</head>
+<body>
+  <div id="app" class="section">
+    <div class="container">
+      <div class="buttons is-centered mb-5">
+        <a @click="onCreateTodo" class="button is-medium is-success">เพิ่มรายการสิ่งที่ต้องทำ</a>
+        <!-- <a @click="onSave" class="button is-medium is-dark is-outlined">บันทึก</a> -->
+        <a @click="onDelete" class="button is-medium is-danger is-outlined">ลบ</a>
+      </div>
+      </div>
+      <div class="columns is-multiline">
+        <div v-for="(todo, i) of todos" class="column is-6">
+          <todo-list
+            :index="i"
+            :value="todo"
+            @input="onTodoUpdated"
+            @add-list="onTodoCreatedList"></todo-list>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    Vue.component('todo-list', {
+      // props: ['color', 'init-title'],
+      props: {
+        color: {
+          type: String,
+          default: 'is-link'
+        },
+        initTitle: String,
+        value: Array,
+        index: Number
+      },
+      data () {
+        return {
+          title: '',
+          todoText: ''
+        }
+      },
+      methods: {
+        onAddList () {
+          this.value.push({
+            text: this.todoText,
+            checked: false
+          })
+          this.todoText = ''
+          this.$emit('add-list')
+          this.$emit('input', this.index, this.value)
+        },
+        onListUpdated () {
+          this.$emit('input', this.index, this.value)
+        }
+      },
+      mounted () {
+        this.title = this.initTitle || 'สิ่งที่ต้องทำ'
+      },
+      template: `
+        <div class="box">
+          <h1 class="subtitle">{{ title }}</h1>
+          <div class="level is-mobile">
+            <div class="level-left">
+              <input v-model="todoText" type="text" class="input">
+            </div>
+            <div class="level-right">
+              <a @click="onAddList" class="button" :class="color">เพิ่มรายการ</a>
+            </div>
+          </div>
+          <div class="content">
+            <ul v-if="value.length">
+              <li v-for="li of value">
+                <label>
+                  <input v-model="li.checked" @input="onListUpdated" type="checkbox">
+                  <span :style="{ textDecoration: li.checked ? 'line-through' : 'none' }">{{ li.text }}</span>
+                </label>
+              </li>
+            </ul>
+            <div v-else class="message is-danger">
+              <div class="message-body">ยังไม่มีรายการ</div>
+            </div>
+          </div>
+        </div>
+      `
+    })
+
+    new Vue({
+      el: '#app',
+      data: {
+        todos: [
+          []
+        ]
+      },
+      methods: {
+        onCreateTodo () {
+          this.todos.push([])
+        },
+        onTodoCreatedList () {
+          console.log(new Date(), 'Added list')
+        },
+        onTodoUpdated (index, list) {
+          this.todos[index] = list
+          this.onSave()
+        },
+        onSave () {
+          localStorage.setItem('todos', JSON.stringify(this.todos))
+        },
+        onDelete () {
+          this.todos = [[]]
+          localStorage.removeItem('todos')
+        }
+      },
+      mounted () {
+        const saveString = localStorage.getItem('todos')
+        this.todos = JSON.parse(saveString) || [[]]
+      }
+    })
+  </script>
+</body>
+</html>
